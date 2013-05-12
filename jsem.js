@@ -21,12 +21,11 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 var jsem = jsem || {
-  var 
       // Version of this program.
-      version           = "1.0.0",
+      version           : "1.0.1",
 
       // Easy access to the document object.
-	    document          = window.document,
+	    document          : window.document,
 
       // Regular expression
       //   (C) http://www.regular-expressions.info/
@@ -34,29 +33,40 @@ var jsem = jsem || {
       //fHost             = /@[A-Za-z0-9.-]+\./
       //fExtension        = /\.[A-Za-z]{2,4}/,
 
-      fEmailAddresses   = /[A-Za-z0-9._%+-]+@[A-Z0-9.-]+\.[A-Za-z]{2,4}/g,
-      fAtSymbol         = /@/,
-      fDot              = /\./,
+      fEmailAddresses   : /[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4}/g,
+      fAtSymbol         : /@/,
+      fDot              : /\./,
 
       // The @ replacement options
-      atOptions         = [" [at] ", " at ", "[at]", "@".charCodeAt(0)],
+      atOptions         : [" [at] ", " at ", "[at]", "&#" + "@".charCodeAt(0) + ";"],
 
       // The . replacement options
-      dotOptions       = [" [dot] ", " dot ", "[dot]", ".".charCodeAt(0)],
+      dotOptions        : [" [dot] ", " dot ", "[dot]", "&#" + ".".charCodeAt(0) + ";"],
 
       /**
        * Options variable for any options.
-       *   at-replacement: the replacement for the @ symbol.
-       *   dot-repalcement: the replacement for the . symbol.
-       *   email-address : the email address (anything before @)
-       *   email-host    : the email host    (between the @ and .)
-       *   email-extension : the email host's extension (.com, .org, etc)
        */
-      options          = [],
+      options              : {
+        // Replacement for the @
+        "at-replacement"     : "",
 
+        // Replacement for the .
+        "dot-replacement"    : "",
 
-      jsem             = function() {
-        return this;
+        // The user's email address e.g: test    (from test@email.com)
+        "email-address"      : "",
+
+        // The host the email is from e.g: email (from test@email.com)
+        "email-host"         : "",
+
+        // The host's extension e.g: com         (from test@email.com)
+        "email-extension"    : "",
+
+        // The catalyst for the email that will be displayed to the users.
+        "final-email"        : "",
+
+        // The email that will be displayed in mailto: links. no way to really avoid that?
+        "final-email-safe"   : ""
       },
 
       /**
@@ -64,11 +74,11 @@ var jsem = jsem || {
        *   options         : the options to use
        *     at-replacement: returns override if set 
        */
-      getAtOption       = function(options) {
+      getAtOption       : function(options) {
         // If the user specifies a custom at-replacement, use that. else, use a random one.
         if (options["at-replacement"]) return options["at-replacement"];
 
-        return atOptions[Math.floor(Math.random() * atOptions.length)];
+        return jsem.atOptions[Math.floor(Math.random() * jsem.atOptions.length)];
       },
 
       /**
@@ -76,11 +86,11 @@ var jsem = jsem || {
        *   options         : the options to use
        *     dot-replacement: returns override if set 
        */
-      getDotOption       = function(options) {
+      getDotOption       : function(options) {
         // If the user specifies a custom at-replacement, use that. else, use a random one.
         if (options["dot-replacement"]) return options["dot-replacement"];
 
-        return atOptions[Math.floor(Math.random() * dotOptions.length)];
+        return jsem.dotOptions[Math.floor(Math.random() * jsem.dotOptions.length)];
       },
 
       /**
@@ -90,53 +100,61 @@ var jsem = jsem || {
        *     at-replacement : the replacement character(s) for the @
        *     dot-replacement: the replacement character(s) for the .
        */
-      mask              = function(email, options) {
+      mask              : function(email, options) {
         if (typeof email === "undefined" || email == "") return;
+        options = options ? options : this.options;
 
-        var newEmail = "";
+        // Start out with what they have.
+        options["final-email"]      = email;
 
         options["email-address"]    = email.split("@")[0];
-        options["email-host"]       = options["email-address"][1].split(".")[0];
-        options["email-extension"]  = options["email-address"][1].split(".")[1];
+        options["email-host"]       = email.split("@")[1].split(".")[0];
+        options["email-extension"]  = email.split("@")[1].split(".")[1];
 
         // Replace the email-address, email-host, etc, with
-        options = replaceChars(options);
+        options = jsem.replaceChars   (options);
+        options = jsem.replaceAtSymbol(options);
+        options = jsem.replaceDot     (options);
 
-        newEmail = options["new-email-address"]    + 
-                   replaceAtSymbol(email, options) +
-                   options["new-email-host"]       +
-                   replaceDot(email, options)      +
-                   options["new-email-extension"];
+        return options["final-email"];
+      },
 
-        return newEmail;
+      maskAll           : function(options) {
+        options = options ? options : this.options;
+        var addresses = document.body.innerHTML.match(jsem.fEmailAddresses);
+        console.log(addresses);
+
+        for (var i = 1; i < addresses.length; i++) {
+          // for each address.. mask it.
+          alert("Masking " + addresses[i]);
+          document.body.innerHTML = document.body.innerHTML.replace(addresses[i], jsem.mask(addresses[i]));
+        }
       },
 
 
       /** 
        * Replace the @
        */
-      replaceAtSymbol   = function(email, options) {
-        if (typeof email === "undefined" || email == "") return;
-
-        var replacement = getAtOption(options);
-        return email.replace(fAtSymbol, replacement);
+      replaceAtSymbol   : function(options) {
+        var replacement = jsem.getAtOption(options);
+        options["final-email"] = options["final-email"].replace(jsem.fAtSymbol, replacement);
+        return options;
       },
 
       /**
        * Replace the .
        */
-      replaceDot        = function(email, options) {
-        if (typeof email === "undefined" || email == "") return;
-
-        var replacement = options["dot-replacement"] ? options["dot-replacement"] : " [dot] ";
-        return email.replace(fDot, replacement);
+      replaceDot        : function(options) {
+        var replacement = jsem.getDotOption(options);
+        options["final-email"] = options["final-email"].replace(jsem.fDot, replacement);
+        return  options;
       },
 
       /**
        * Replace the rest of the characters.
        *   email  : at this point should be an array with 3 vars. [emailaddress, host, extension]
        */
-      replaceChars      = function(options) {
+      replaceChars      : function(options) {
         var newEmail    = "",
             newHost     = "",
             newExtension= "",
@@ -146,17 +164,15 @@ var jsem = jsem || {
             i;
 
         for (i = 0; i < email.length; i++)
-          newEmail += email.charAt(i).charCode(0);
+          newEmail += "&#" + email.charCodeAt(i) + ";";
 
         for (i = 0; i < host.length; i++)
-          newHost += host.charAt(i).charCode(0);
+          newHost += "&#" + host.charCodeAt(i) + ";";
 
         for (i = 0; i < extension.length; i++)
-          newExtension += extension.charAt(i).charCode(0);
+          newExtension += "&#" + extension.charCodeAt(i) + ";";
 
-        options["new-email-address"]   = newEmail;
-        options["new-email-host"]      = newHost;
-        options["new-email-extension"] = newExtension;
+        options["final-email"].replace(email, newEmail).replace(host, newHost).replace(extension, newExtension);
         return options;
       }
 };
