@@ -122,11 +122,9 @@ var jsem = jsem || {
       maskAll           : function(options) {
         options = options ? options : this.options;
         var addresses = document.body.innerHTML.match(jsem.fEmailAddresses);
-        console.log(addresses);
 
         for (var i = 1; i < addresses.length; i++) {
           // for each address.. mask it.
-          alert("Masking " + addresses[i]);
           document.body.innerHTML = document.body.innerHTML.replace(addresses[i], jsem.mask(addresses[i]));
         }
       },
