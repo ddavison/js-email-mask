@@ -3,7 +3,8 @@
  * 
  * Copyright (C) Daniel Davison
  * Description: JavaScript Email Masker
- *   An easy-to-use utility that would be used for post-loading of a web page to mask emails.
+ *   A free, easy-to-use utility that is used to mask email address from bots and scanners
+ *   using algorithms which choose random symbols to use.
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -19,7 +20,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-(function(window, undefined) {
+var jsem = jsem || {
   var 
       // Version of this program.
       version           = "1.0.0",
@@ -158,4 +159,6 @@
         options["new-email-extension"] = newExtension;
         return options;
       }
-})( window );
+};
+
+window.jsem = jsem;
